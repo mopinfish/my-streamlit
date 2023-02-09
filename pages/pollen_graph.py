@@ -26,8 +26,6 @@ months_number = selected_month.replace('月', '').zfill(2)
 start = f"2022{months_number}{str(months[selected_month][0]).zfill(2)}"
 end = f"2022{months_number}{str(months[selected_month][1]).zfill(2)}"
 url = f'https://wxtech.weathernews.com/opendata/v1/pollen?citycode=13108&start={start}&end={end}'
-st.write(url)
-
 
 pollen = pd.read_csv(url)
 pollen = pollen.query('pollen >= 0')
