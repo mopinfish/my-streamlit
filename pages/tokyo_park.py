@@ -33,7 +33,7 @@ def main():
     
     m.add_child(feature_group)
     # call to render Folium map in Streamlit
-    st_data = st_folium(m, width=725)
+    st_data = st_folium(m, width=725, returned_objects=[])
 
 if __name__ == '__main__':
     main()

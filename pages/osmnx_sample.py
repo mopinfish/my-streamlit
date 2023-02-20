@@ -2,6 +2,8 @@ import streamlit as st
 import networkx as nx
 import osmnx as ox
 from geopy.geocoders import Nominatim
+import folium
+from streamlit_folium import st_folium
 
 geolocator = Nominatim(user_agent="geocoding-example")
 
@@ -20,6 +22,10 @@ if st.button("検索", key=0):
     fig, ax = ox.plot_graph(G)
     # Matplotlib の Figure を指定して可視化する
     st.pyplot(fig)
+    # center on Liberty Bell, add marker
+    m = folium.Map(location=[location.latitude, location.longitude], zoom_start=15)
+    # call to render Folium map in Streamlit
+    st_data = st_folium(m, width=725, returned_objects=[])
 
     # what sized area does our network cover in square meters?
     G_proj = ox.project_graph(G)
