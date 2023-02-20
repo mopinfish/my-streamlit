@@ -1,8 +1,9 @@
 import streamlit as st
-import networkx as nx
 import osmnx as ox
+ox.config(use_cache=True, log_console=True)
 from geopy.geocoders import Nominatim
 import folium
+from folium import plugins
 from streamlit_folium import st_folium
 
 geolocator = Nominatim(user_agent="geocoding-example")
@@ -18,12 +19,21 @@ if st.button("検索", key=0):
     latlon = (location.latitude, location.longitude)
     one_mile = 1609  # meters
     G = ox.graph_from_point(latlon, dist=one_mile, network_type=network_type)
-    # download/model a street network for some city then visualize it
-    fig, ax = ox.plot_graph(G)
+    # 元のグラフのエッジを線グラフの近さ中心性で色付けする
+    fig, ax = ox.plot_graph(G, bgcolor='k', node_size=0, edge_linewidth=0.5, edge_alpha=1)
     # Matplotlib の Figure を指定して可視化する
     st.pyplot(fig)
+
     # center on Liberty Bell, add marker
-    m = folium.Map(location=[location.latitude, location.longitude], zoom_start=15)
+    m = folium.Map(location=[location.latitude, location.longitude], zoom_start=15, control_scale=True)
+    # 地図に画像を追加
+    url = "https://cdn-ak.f.st-hatena.com/images/fotolife/c/chayarokurokuro/20210807/20210807120306.png"
+    plugins.FloatImage(
+        url, 
+        bottom=45, # 数値を上げると上がる  ベストは bottom=65
+        left=65,  # 数値を上げると右に移動  ベストは left=82
+    ).add_to(m)
+
     # call to render Folium map in Streamlit
     st_data = st_folium(m, width=725, returned_objects=[])
 
