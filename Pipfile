@@ -12,6 +12,8 @@ geopandas = "*"
 shapely = "*"
 folium = "*"
 streamlit-folium = "*"
+osmnx = "*"
+geopy = "*"
 
 [dev-packages]
 
