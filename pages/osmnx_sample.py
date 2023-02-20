@@ -26,6 +26,9 @@ if st.button("検索", key=0):
 
     # center on Liberty Bell, add marker
     m = folium.Map(location=[location.latitude, location.longitude], zoom_start=15, control_scale=True)
+    iframe = folium.IFrame(location.address)
+    popup = folium.Popup(iframe, min_width=300, max_width=300)
+    folium.Marker([location.latitude, location.longitude], popup=popup).add_to(m)
     # 地図に画像を追加
     url = "https://cdn-ak.f.st-hatena.com/images/fotolife/c/chayarokurokuro/20210807/20210807120306.png"
     plugins.FloatImage(
