@@ -21,7 +21,7 @@ def main():
         latlon = [lonlat[1], lonlat[0]]
     
         message = f"【公園名】：{park['Name']}<br><br>"
-        if park['Description']:
+        if str(park['Description']) != 'nan':
             message += f"【説明】：{park['Description']}<br><br>"
         message += f"【住所】：{park['Address']}<br><br>"
         message += f"【ジャンル】：{park['Genre']}"
