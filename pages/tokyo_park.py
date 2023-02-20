@@ -14,7 +14,7 @@ def main():
     
     
     # center on Liberty Bell, add marker
-    m = folium.Map(location=[35.6809591, 139.7673068], zoom_start=12)
+    m = folium.Map(location=[35.6809591, 139.7673068], zoom_start=12, control_scale=True)
     feature_group = folium.FeatureGroup("Locations")
     for idx, park in display_parks.iterrows():
         lonlat = park['Coordinates'].split(',')
@@ -33,7 +33,7 @@ def main():
     
     m.add_child(feature_group)
     # call to render Folium map in Streamlit
-    st_data = st_folium(m, width=725)
+    st_data = st_folium(m, width=725, returned_objects=[])
 
 if __name__ == '__main__':
     main()
