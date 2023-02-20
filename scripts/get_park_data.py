@@ -58,8 +58,20 @@ def to_geometry(row):
 appid = os.environ["YAHOO_CLIENT_ID"]
 ac = 13
 start = 0
-result = LocalSearch(appid).search(ac, start)
+localSearch = LocalSearch(appid)
+result = localSearch.search(ac, start)
 features = result['Feature']
+total = result['ResultInfo']['Total']
+
+print(total)
+print(type(features))
+while start + 100 < total:
+    start += 100
+    print(f"start is {start}")
+    result = localSearch.search(ac, start)
+    features.extend(result['Feature'])
+print(len(features))
+
 
 parks = pd.DataFrame(features).sort_values('Id')
 parks = parks.apply(to_geometry, axis=1)
