@@ -94,8 +94,8 @@ for now in range(num):
 
 # show graph
 nt.show("dijkstra.html")
-html_file = open("dijkstra.html", "r", encoding="utf-8")
-components.html(html_file.read(), height=700, width=802)
+#html_file = open("dijkstra.html", "r", encoding="utf-8")
+#components.html(html_file.read(), height=700, width=802)
 
 with st.sidebar:
     st.text(f" {s} から {t} までの距離は {dist[t_]} です")
