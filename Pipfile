@@ -14,6 +14,7 @@ folium = "*"
 streamlit-folium = "*"
 osmnx = "*"
 geopy = "*"
+importlib-resources = "*"
 
 [dev-packages]
 
