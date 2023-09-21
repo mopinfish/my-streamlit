@@ -15,6 +15,16 @@ streamlit-folium = "*"
 osmnx = "*"
 geopy = "*"
 importlib-resources = "*"
+pycognito = "*"
+flake8 = "*"
+black = "*"
+isort = "*"
+threadpoolctl = "*"
+
+mypy = "*"
+requests = "*"
+types-requests = "*"
+types-jmespath = "*"
 
 [dev-packages]
 
