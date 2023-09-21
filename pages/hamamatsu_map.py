@@ -54,12 +54,14 @@ def main():
     points = pd.DataFrame(features).sort_values('Id')
     points = points.apply(to_geometry, axis=1)
 
+    st.markdown("## 施設一覧")
     points
     
     ret = get_fiware_data()
     temperature_value = ret[0]['temperature']['value']
 
     # center on Liberty Bell, add marker
+    st.markdown("## マップ")
     m = folium.Map(location=[34.70572632560328, 137.73013034232767], zoom_start=19, control_scale=True)
     feature_group = folium.FeatureGroup("Locations")
     for idx, point in points.iterrows():
