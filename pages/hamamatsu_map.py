@@ -9,6 +9,21 @@ import matplotlib.pyplot as plt
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from lib import YolpSearch
+import requests
+import json
+
+def get_fiware_data():
+    authorization= os.getenv("FIWARE_AUTHORIZATION")
+    headers = {
+      'Fiware-Service': 'make_our_city_data',
+      'Fiware-ServicePath': '/',
+      'Authorization': authorization,
+    }
+    orion_endpoint = os.getenv("FIWARE_ORION_ENDPOINT")
+    path = "/v2/entities?\options=keyValues&limit=100&type=Room"
+    response = requests.get(orion_endpoint + path, headers=headers)
+    ret = response.json()
+    return ret
 
 def to_geometry(row):
 
@@ -20,7 +35,7 @@ def main():
     
     appid = os.environ["YAHOO_CLIENT_ID"]
     ac = 22
-    gc = '0301006'
+    gc = '0102003'
     start = 0
     yolp = YolpSearch(appid)
     result = yolp.search(ac, gc, start)
@@ -41,8 +56,11 @@ def main():
 
     points
     
+    ret = get_fiware_data()
+    temperature_value = ret[0]['temperature']['value']
+
     # center on Liberty Bell, add marker
-    m = folium.Map(location=[34.70438265742628, 137.73444823876622], zoom_start=12, control_scale=True)
+    m = folium.Map(location=[34.70572632560328, 137.73013034232767], zoom_start=19, control_scale=True)
     feature_group = folium.FeatureGroup("Locations")
     for idx, point in points.iterrows():
         lonlat = point['Coordinates'].split(',')
@@ -50,6 +68,7 @@ def main():
     
         message = f"【施設名】：{point['Name']}<br><br>"
         message += f"【住所】：{point['Property']['Address']}<br><br>"
+        message += f"【現在の気温】：{temperature_value}度<br><br>"
         iframe = folium.IFrame(message)
         popup = folium.Popup(iframe, min_width=300, max_width=300)
         feature_group.add_child(folium.Marker(
