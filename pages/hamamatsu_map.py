@@ -55,8 +55,12 @@ def main():
     points = pd.DataFrame(features).sort_values('Id')
     points = points.apply(to_geometry, axis=1)
 
-    st.markdown("## 施設一覧")
+    st.markdown("## スポーツ施設一覧")
     points
+
+    evacuations = pd.read_csv("data/evacuation.csv")
+    st.markdown("## 避難所一覧")
+    evacuations
     
     ret = get_fiware_data()
     temperature_value = ret[-1]['temperature']['value']
@@ -81,6 +85,22 @@ def main():
         popup = folium.Popup(iframe, min_width=300, max_width=300)
         feature_group.add_child(folium.Marker(
             latlon, tooltip=point['Name'], popup=popup
+        ))
+
+    for idx, point in evacuations.iterrows():
+        latlon = [point['緯度'], point['経度']]
+    
+        message = f"【避難所名称】：{point['避難所名称']}<br>"
+        message += f"【住所】：{point['所在地']}<br>"
+        #if str(point['Description']) != '':
+        #    message += f"【説明】：{point['Description']}<br>"
+        message += f"【収容可能人員（屋内）】：{point['収容可能人員（屋内）']}人<br>"
+        #message += f"【現在の気温】：{temperature_value}度<br>"
+        #message += f"【現在の湿度】：{humidity_value}％<br>"
+        iframe = folium.IFrame(message)
+        popup = folium.Popup(iframe, min_width=300, max_width=300)
+        feature_group.add_child(folium.Marker(
+            latlon, tooltip=point['避難所名称'], popup=popup, icon = folium.Icon(color="red")
         ))
     
     m.add_child(feature_group)
