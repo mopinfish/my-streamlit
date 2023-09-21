@@ -49,10 +49,7 @@ def main():
         latlon = [lonlat[1], lonlat[0]]
     
         message = f"【施設名】：{point['Name']}<br><br>"
-        if str(point['Description']) != 'nan':
-            message += f"【説明】：{point['Description']}<br><br>"
         message += f"【住所】：{point['Property']['Address']}<br><br>"
-        message += f"【ジャンル】：{point['Property']['Genre']}"
         iframe = folium.IFrame(message)
         popup = folium.Popup(iframe, min_width=300, max_width=300)
         feature_group.add_child(folium.Marker(
