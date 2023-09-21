@@ -35,8 +35,8 @@ def main():
     st.title('浜松市マップ')
     
     appid = os.environ["YAHOO_CLIENT_ID"]
-    ac = 22
-    gc = '0102003'
+    ac = 22131
+    gc = '0301'
     start = 0
     yolp = YolpSearch(appid)
     result = yolp.search(ac, gc, start)
@@ -59,12 +59,12 @@ def main():
     points
     
     ret = get_fiware_data()
-    temperature_value = ret[1]['temperature']['value']
-    humidity_value = ret[1]['humidity']['value']
+    temperature_value = ret[-1]['temperature']['value']
+    humidity_value = ret[-1]['humidity']['value']
 
     # center on Liberty Bell, add marker
     st.markdown("## マップ")
-    m = folium.Map(location=[34.70572632560328, 137.73013034232767], zoom_start=19, control_scale=True)
+    m = folium.Map(location=[34.70572632560328, 137.73013034232767], zoom_start=15, control_scale=True)
     feature_group = folium.FeatureGroup("Locations")
     for idx, point in points.iterrows():
         lonlat = point['Coordinates'].split(',')
@@ -72,8 +72,11 @@ def main():
     
         message = f"【施設名】：{point['Name']}<br>"
         message += f"【住所】：{point['Property']['Address']}<br>"
+        if str(point['Description']) != '':
+            message += f"【説明】：{point['Description']}<br>"
+        message += f"【ジャンル】：{point['Property']['Genre'][0]['Name']}<br>"
         message += f"【現在の気温】：{temperature_value}度<br>"
-        message += f"【現在の湿度】：{humidity_value}％<br><br>"
+        message += f"【現在の湿度】：{humidity_value}％<br>"
         iframe = folium.IFrame(message)
         popup = folium.Popup(iframe, min_width=300, max_width=300)
         feature_group.add_child(folium.Marker(
