@@ -23,6 +23,7 @@ def get_fiware_data():
     path = "/v2/entities?\options=keyValues&limit=100&type=Room"
     response = requests.get(orion_endpoint + path, headers=headers)
     ret = response.json()
+    print(ret)
     return ret
 
 def to_geometry(row):
@@ -58,7 +59,8 @@ def main():
     points
     
     ret = get_fiware_data()
-    temperature_value = ret[0]['temperature']['value']
+    temperature_value = ret[1]['temperature']['value']
+    humidity_value = ret[1]['humidity']['value']
 
     # center on Liberty Bell, add marker
     st.markdown("## マップ")
@@ -68,9 +70,10 @@ def main():
         lonlat = point['Coordinates'].split(',')
         latlon = [lonlat[1], lonlat[0]]
     
-        message = f"【施設名】：{point['Name']}<br><br>"
-        message += f"【住所】：{point['Property']['Address']}<br><br>"
-        message += f"【現在の気温】：{temperature_value}度<br><br>"
+        message = f"【施設名】：{point['Name']}<br>"
+        message += f"【住所】：{point['Property']['Address']}<br>"
+        message += f"【現在の気温】：{temperature_value}度<br>"
+        message += f"【現在の湿度】：{humidity_value}％<br><br>"
         iframe = folium.IFrame(message)
         popup = folium.Popup(iframe, min_width=300, max_width=300)
         feature_group.add_child(folium.Marker(
