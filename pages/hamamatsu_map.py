@@ -26,6 +26,7 @@ def get_fiware_data():
     print(ret)
     return ret
 
+
 def to_geometry(row):
 
     row['Coordinates'] = str(row['Geometry']['Coordinates'])
@@ -35,7 +36,7 @@ def main():
     st.title('浜松市マップ')
     
     appid = os.environ["YAHOO_CLIENT_ID"]
-    ac = 22131
+    ac = 22
     gc = '0301'
     start = 0
     yolp = YolpSearch(appid)
@@ -57,6 +58,7 @@ def main():
 
     st.markdown("## スポーツ施設一覧")
     points
+    points.to_csv("data/points.csv", index=False    )
 
     evacuations = pd.read_csv("data/evacuation.csv")
     st.markdown("## 避難所一覧")
