@@ -8,9 +8,9 @@ from streamlit_folium import st_folium
 
 geolocator = Nominatim(user_agent="geocoding-example")
 
-st.title('OSMnx Tool')
+st.title('トイレ検索')
 
-address = st.text_input("場所を入力してください") # 引数に入力内容を渡せる
+address = st.text_input("探したい場所を入力してください") # 引数に入力内容を渡せる
 
 if st.button("検索", key=1):
     location = geolocator.geocode(address)
