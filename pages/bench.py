@@ -8,7 +8,7 @@ from streamlit_folium import st_folium
 
 geolocator = Nominatim(user_agent="geocoding-example")
 
-st.title('トイレ検索')
+st.title('ベンチ検索')
 
 address = st.text_input("探したい場所を入力してください") # 引数に入力内容を渡せる
 
@@ -18,11 +18,11 @@ if st.button("検索", key=1):
     st.write("full address = ", location.address)
     latlon = (location.latitude, location.longitude)
     one_mile = 1609  # meters
-    features = ox.features_from_point(latlon, tags={'amenity': True}, dist=one_mile).reset_index()
-    toilets = features[(features['element_type'] == 'node') & (features['amenity'] == 'toilets')]
+    features = ox.features_from_point(latlon, tags={'amenity': True}, dist=2 * one_mile).reset_index()
+    toilets = features[(features['element_type'] == 'node') & (features['amenity'] == 'bench')]
 
     # center on Liberty Bell, add marker
-    m = folium.Map(location=[location.latitude, location.longitude], zoom_start=15, control_scale=True)
+    m = folium.Map(location=[location.latitude, location.longitude], zoom_start=14, control_scale=True)
     iframe = folium.IFrame(location.address)
     popup = folium.Popup(iframe, min_width=300, max_width=300)
     # 読み込んだデータ(緯度・経度、ポップアップ用文字、アイコンを表示)
@@ -30,7 +30,7 @@ if st.button("検索", key=1):
         # ポップアップの作成
         lat = row['geometry'].y
         lon = row['geometry'].x
-        pop = f'<a href="https://www.google.com/maps/dir/{lat},{lon}" target="_blank">Google Mapで見る</a>'
+        pop = f'<a href="https://www.google.com/maps/dir//{lat},{lon}" target="_blank">Google Mapで見る</a>'
         folium.Marker(
             # 緯度と経度を指定
             location=[row['geometry'].y, row['geometry'].x],
