@@ -18,7 +18,7 @@ if st.button("検索", key=1):
     st.write("full address = ", location.address)
     latlon = (location.latitude, location.longitude)
     one_mile = 1609  # meters
-    features = ox.features_from_point(latlon, tags={'amenity': True}, dist=2 * one_mile).reset_index()
+    features = ox.features_from_point(latlon, tags={'amenity': True}, dist=one_mile).reset_index()
     toilets = features[(features['element_type'] == 'node') & (features['amenity'] == 'bench')]
 
     # center on Liberty Bell, add marker
