@@ -36,3 +36,4 @@ hospitals = pd.DataFrame(features).sort_values('Id')
 hospitals = hospitals.apply(to_geometry, axis=1)
 
 hospitals
+hospitals.to_csv('./data/hospitals_koto.csv', index=False)
