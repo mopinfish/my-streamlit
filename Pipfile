@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 matplotlib = "*"
 streamlit = "*"
-networkx = "*"
+networkx = "3.2.1"
 pyvis = "*"
 geopandas = "*"
 shapely = "*"
