@@ -20,11 +20,14 @@ flake8 = "*"
 black = "*"
 isort = "*"
 threadpoolctl = "*"
+contextily = "*"
+scipy = "*"
 
 mypy = "*"
 requests = "*"
 types-requests = "*"
 types-jmespath = "*"
+
 
 [dev-packages]
 
