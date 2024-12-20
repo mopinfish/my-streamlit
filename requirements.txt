@@ -52,7 +52,7 @@ mdurl==0.1.2
 mercantile==1.2.1
 mypy==1.11.1
 mypy-extensions==1.0.0
-networkx==3.3
+networkx==3.2.1
 numpy==1.26.4
 osmnx==1.9.4
 packaging==24.1
