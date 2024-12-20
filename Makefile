@@ -8,3 +8,5 @@ install:
 	pipenv install -r requirements.txt
 freeze:
 	pip freeze > requirements.txt
+lock:
+	pipenv lock
