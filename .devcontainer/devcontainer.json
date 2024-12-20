@@ -1,7 +1,6 @@
 {
-  "name": "Python 3",
-  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
+  "name": "Python Development",
+  "dockerFile": "../Dockerfile",
   "customizations": {
     "codespaces": {
       "openFiles": [
@@ -10,14 +9,17 @@
       ]
     },
     "vscode": {
-      "settings": {},
+      "settings": {
+          "python.pythonPath": "/workspace/venv/bin/python",
+          "python.venvPath": "/workspace/venv"
+      },
       "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance"
       ]
     }
   },
-  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; pip3 install --user streamlit; echo '✅ Packages installed and Requirements met'",
+  "postCreateCommand": "source /workspace/venv/bin/activate && pip install -r requirements.txt",
   "postAttachCommand": {
     "server": "streamlit run app.py --server.enableCORS false --server.enableXsrfProtection false"
   },
