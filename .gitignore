@@ -1,3 +1,9 @@
 .DS_Store
 cache
 __pycache__
+
+# from levenshtein_distance.py
+lib/bindings/
+lib/tom-select/
+lib/vis-9.1.2/
+network.html

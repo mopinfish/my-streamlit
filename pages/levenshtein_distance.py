@@ -92,10 +92,12 @@ for now in range(num):
         nt.add_edge(now, to, 
                     color=col, width=wid, label=str(weight[now][to]))
 
-# show graph
-nt.show("dijkstra.html")
-#html_file = open("dijkstra.html", "r", encoding="utf-8")
-#components.html(html_file.read(), height=700, width=802)
+# HTMLファイルとして保存
+nt.save_graph("network.html")
+# StreamlitでHTMLを表示
+with open("network.html", "r", encoding="utf-8") as f:
+    html = f.read()
+components.html(html, height=600)
 
 with st.sidebar:
     st.text(f" {s} から {t} までの距離は {dist[t_]} です")
