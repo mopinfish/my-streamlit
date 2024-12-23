@@ -65,7 +65,7 @@ def main():
     st.title("SRP Tools | Tokyo Similarities Analysis")
     # テキスト入力フィールドを作成
     search_term = st.text_input('検索')
-    options = tokyo_stations['station_name'].values
+    options = np.unique(tokyo_stations['station_name'].values)
     options = [option for option in options if search_term.lower() in option.lower()] if search_term else options
     target = st.selectbox(
         '対象駅を選択：',
