@@ -19,14 +19,15 @@ st.set_page_config(
 stations = pd.read_csv('data/srp_tools/stations_with_std_stats.csv')
 similarities_path = "data/srp_tools/cosine_similarity_tokyo.csv"
 similarities = pd.read_csv(similarities_path)
-#similarities.columns = ['org-dest', 'Similarity']
-#similarities[['org', 'dest']] = similarities['org-dest'].str.split('-', expand=True)
-#similarities.drop(columns=['org-dest'], inplace=True)
-#similarities = similarities[['org', 'dest', 'Similarity']]
+similarities.columns = ['org-dest', 'Similarity']
+similarities[['org', 'dest']] = similarities['org-dest'].str.split('-', expand=True)
+similarities.drop(columns=['org-dest'], inplace=True)
+similarities = similarities[['org', 'dest', 'Similarity']]
 #similarities.to_csv(similarities_path, index=False)
 
 # variables
-tokyo_stations = stations[stations['pref_cd'] == 13]
+tokyo_stations = stations[stations['pref_cd'] == 13].sort_values(by='station_cd')
+tokyo_stations
 
 
 # ------------------------------------------------------------------
@@ -76,7 +77,11 @@ def main():
         st.write("You can show dataframes, charts, and other content.")
         similar_stations = similarities.query(f'org == "{target}" | dest == "{target}"').sort_values(by='Similarity', ascending=False)
         top_10 = similar_stations.head(10)
+        bottom_10 = similar_stations.tail(10)
+        st.write('Top 10 Similarities')
         st.write(top_10)
+        st.write('Bottom 10 Similarities')
+        st.write(bottom_10)
 
         # Show feature contributions
         st.write("Feature Contributions")
