@@ -20,6 +20,7 @@ st.set_page_config(
 )
 # Load data
 stations = pd.read_csv('data/srp_tools/stations_with_stats.csv')
+stations_std = pd.read_csv('data/srp_tools/stations_with_std_stats.csv')
 similarities_path = "data/srp_tools/cosine_similarity_tokyo.csv"
 similarities = pd.read_csv(similarities_path)
 similarities.columns = ['org-dest', 'Similarity']
@@ -29,7 +30,7 @@ similarities = similarities[['org', 'dest', 'Similarity']]
 #similarities.to_csv(similarities_path, index=False)
 
 # variables
-tokyo_stations = stations[stations['pref_cd'] == 13].sort_values(by='station_cd')
+tokyo_stations = stations_std[stations_std['pref_cd'] == 13].sort_values(by='station_cd')
 
 # functions
 
@@ -76,8 +77,8 @@ def show_feature_contributions(org, dest):
        'mean_integration', 'num_communities', 'modularity', 'var_integration',]
 
     # 類似度の高いペアのベクトルを取得
-    vec1 = stations[stations['station_name'] == org].iloc[0][columns].values
-    vec2 = stations[stations['station_name'] == dest].iloc[0][columns].values
+    vec1 = stations_std[stations_std['station_name'] == org].iloc[0][columns].values
+    vec2 = stations_std[stations_std['station_name'] == dest].iloc[0][columns].values
     # 寄与度の計算
     contributions = (vec1 * vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
     # 寄与率の可視化
