@@ -100,6 +100,11 @@ def main():
 
     # components
     st.title("SRP Tools | Tokyo Similarities Analysis")
+    # コサイン類似度の駅一覧
+    st.write('駅のコサイン類似度対応表')
+    similarities
+    st.markdown('----')
+
     # テキスト入力フィールドを作成
     search_term = st.text_input('検索')
     options = np.unique(tokyo_stations['station_name'].values)
