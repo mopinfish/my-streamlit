@@ -2,6 +2,9 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import networkx as nx
+import osmnx as ox
+import contextily as cx
 
 # Set page configuration
 st.set_page_config(
@@ -27,7 +30,39 @@ similarities = similarities[['org', 'dest', 'Similarity']]
 
 # variables
 tokyo_stations = stations[stations['pref_cd'] == 13].sort_values(by='station_cd')
-tokyo_stations
+
+# functions
+
+def graph_from_df(data):
+    wurster_hall = (data['lat'], data['lon'])
+    one_mile = 800 #meters
+
+    try:
+        G = ox.graph_from_point(wurster_hall, dist=one_mile, network_type='drive')
+        if G is None:
+            return None
+        G = ox.project_graph(G, to_crs='EPSG:3857')
+        return G
+    except nx.NetworkXPointlessConcept as e:
+        print(e)
+        print(f"Graph cannot retrieve for {data['station_cd']}: {data['station_name']} ({data['lat']}, {data['lon']})")
+        return None
+    except ValueError as e:
+        if str(e) == "Graph contains no edges.":
+            print(f"{data['station_cd']}: {data['station_name']} グラフにエッジがありません。エッジを追加してください。")
+            return None
+
+# グラフオブジェクトを受け取り、背景地図とともに描画する
+def plot_graph(G, title=''):
+    # グラフを描画
+    fig, ax = ox.plot_graph(G, show=False, close=False, edge_color='gray', edge_linewidth=2.0, node_size=20, node_color='darkblue')
+    # 背景地図の追加
+    cx.add_basemap(ax, source=cx.providers.OpenStreetMap.Mapnik)
+    fig.tight_layout()
+    # グラフを表示
+    st.pyplot(fig)
+    # メモリを解放するためにfigureを閉じる
+    plt.close(fig)
 
 
 # ------------------------------------------------------------------
@@ -91,6 +126,40 @@ def main():
         )
         if dest:
             show_feature_contributions(target, dest)
+            st.markdown("""
+| 指標 | 説明 |
+|------|------|
+| n | グラフのノード（交差点）の数 |
+| m | グラフのエッジ（道路区間）の数 |
+| k_avg | 平均次数。ノードあたりの平均エッジ数（2m / n） |
+| edge_length_total | 全エッジの長さの合計 |
+| edge_length_avg | エッジの平均長さ（edge_length_total / m） |
+| street_length_total | 全道路の長さの合計（双方向道路は1回だけカウント） |
+| street_length_avg | 道路の平均長さ |
+| streets_per_node_avg | ノードあたりの平均道路数 |
+| streets_per_node_counts | 各ノードの道路数の分布 |
+| streets_per_node_proportions | 各ノードの道路数の割合 |
+| intersection_count | 交差点の数 |
+| circuity_avg | 平均迂回率。エッジの実際の長さと直線距離の比率 |
+| street_segment_count | 道路区間の数 |
+| self_loop_proportion | 自己ループの割合 |
+| average_cruster_coefficient | グラフのクラスター係数 |
+| num_communities | グラフをコミュニティに分割した際の総数 |
+| modularity | コミュニティ分割の当てはまり度 |
+| mean_integration | インテグレーション値の平均 |
+| var_integration | インテグレーション値の分散 |
+----
+""")
+    target_station = stations[stations['station_name'] == target].iloc[0]
+    G = graph_from_df(target_station)
+    if G is not None:
+        st.write(f'{target_station["station_name"]} ({target_station["lat"]}, {target_station["lon"]})')
+        plot_graph(G, f'{target_station["station_name"]} ({target_station["lat"]}, {target_station["lon"]})')
+    dest_station = stations[stations['station_name'] == dest].iloc[0]
+    G = graph_from_df(dest_station)
+    if G is not None:
+        st.write(f'{dest_station["station_name"]} ({dest_station["lat"]}, {dest_station["lon"]})')
+        plot_graph(G, f'{dest_station["station_name"]} ({dest_station["lat"]}, {dest_station["lon"]})')
 
 if __name__ == '__main__':
     main()
