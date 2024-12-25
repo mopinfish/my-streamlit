@@ -19,7 +19,7 @@ st.set_page_config(
     }
 )
 # Load data
-stations = pd.read_csv('data/srp_tools/stations_with_std_stats.csv')
+stations = pd.read_csv('data/srp_tools/stations_with_stats.csv')
 similarities_path = "data/srp_tools/cosine_similarity_tokyo.csv"
 similarities = pd.read_csv(similarities_path)
 similarities.columns = ['org-dest', 'Similarity']
@@ -151,11 +151,17 @@ def main():
 ----
 """)
     target_station = stations[stations['station_name'] == target].iloc[0]
+    dest_station = stations[stations['station_name'] == dest].iloc[0]
+    target_station['駅種別'] = '対象駅'
+    dest_station['駅種別'] = '選択した駅'
+    df = pd.concat([target_station, dest_station], axis=1).T
+    df.reset_index().set_index('駅種別', inplace=True)
+    df
+
     G = graph_from_df(target_station)
     if G is not None:
         st.write(f'{target_station["station_name"]} ({target_station["lat"]}, {target_station["lon"]})')
         plot_graph(G, f'{target_station["station_name"]} ({target_station["lat"]}, {target_station["lon"]})')
-    dest_station = stations[stations['station_name'] == dest].iloc[0]
     G = graph_from_df(dest_station)
     if G is not None:
         st.write(f'{dest_station["station_name"]} ({dest_station["lat"]}, {dest_station["lon"]})')
