@@ -143,6 +143,13 @@ def main():
 | circuity_avg | 平均迂回率。エッジの実際の長さと直線距離の比率 |
 | street_segment_count | 道路区間の数 |
 | self_loop_proportion | 自己ループの割合 |
+| node_density_km | 1平方キロメートルあたりのノード密度 |
+| intersection_density_km | 1平方キロメートルあたりの交差点密度 |
+| edge_density_km | 1平方キロメートルあたりのエッジ密度 |
+| street_density_km | 1平方キロメートルあたりの道路密度 |
+| street_segment_count | 道路セグメントの総数 |
+| clean_intersection_count | クリーンな交差点（自己ループや並行エッジを除く）の数 |
+| clean_intersection_density_km | 1平方キロメートルあたりのクリーンな交差点密度 |
 | average_cruster_coefficient | グラフのクラスター係数 |
 | num_communities | グラフをコミュニティに分割した際の総数 |
 | modularity | コミュニティ分割の当てはまり度 |
