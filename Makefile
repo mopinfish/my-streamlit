@@ -10,3 +10,5 @@ freeze:
 	pip freeze > requirements.txt
 lock:
 	pipenv lock
+resolve_dependencies:
+	make install & make freeze & make lock
