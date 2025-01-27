@@ -15,7 +15,7 @@ st.title('OSMnxを使ったコミュニティの可視化')
 
 address = st.text_input("表示したい場所を入力してください") # 引数に入力内容を渡せる
 network_type = st.selectbox("network_type", ("all_private", "all", "bike", "drive", "drive_service", "walk")) #第一引数：リスト名、第二引数：選択肢、複数選択可
-miles = st.selectbox("半径距離（マイル）", (1, 2, 4, 8)) #第一引数：リスト名、第二引数：選択肢、複数選択可
+miles = st.selectbox("半径距離（マイル）", (0.5, 1, 2, 4, 8)) #第一引数：リスト名、第二引数：選択肢、複数選択可
 
 if st.button("表示", key=1):
     location = geolocator.geocode(address)
