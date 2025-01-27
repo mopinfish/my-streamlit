@@ -21,6 +21,11 @@ if st.button("表示", key=1):
     location = geolocator.geocode(address)
     latlon = (location.latitude, location.longitude)
     one_mile = 1609  # meters
+
+    st.write("緯度経度：",location.latitude, location.longitude)
+    st.write("住所：", location.address)
+    st.write("表示する半径（m）：", miles * one_mile)
+
     G = ox.graph_from_point(latlon, dist=miles * one_mile, network_type=network_type)
 
     # グラフを無向グラフに変換
