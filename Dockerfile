@@ -1,37 +1,28 @@
-FROM continuumio/miniconda3
+# GDAL公式イメージをベースとして使用
+FROM ghcr.io/osgeo/gdal:ubuntu-small-latest
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN echo "Acquire::http::Pipeline-Depth 0;" > /etc/apt/apt.conf.d/99custom && \
     echo "Acquire::http::No-Cache true;" >> /etc/apt/apt.conf.d/99custom && \
     echo "Acquire::BrokenProxy    true;" >> /etc/apt/apt.conf.d/99custom && \
     echo 'Acquire::http::Timeout "300";' > /etc/apt/apt.conf.d/99timeout
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN apt-get update && apt-get install -y  --fix-missing \
-    python3-venv \
-    build-essential \
-    && apt-get install -y --no-install-recommends gdal-bin libgdal-dev
-
-ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
-ENV C_INCLUDE_PATH=/usr/include/gdal
+# 必要なパッケージをインストール
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    python3.12-venv \
+    fonts-noto-cjk \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
-
-RUN python -m venv /workspace/venv
+# 必要なPythonパッケージをインストール
+RUN python3 -m venv /workspace/venv
 ENV PATH="/workspace/venv/bin:$PATH"
-ENV PATH /opt/conda/bin:$PATH
-
-# for install latest GDAL
-#RUN conda init bash && \
-#    echo ". /root/.bashrc" >> /root/.bashrc && \
-#    /bin/bash -c "source /root/.bashrc"
-RUN conda install -c conda-forge gdal
-ENV GDAL_VERSION=3.7.3
-ENV GDAL_CONFIG=/usr/local/bin/gdal-config
-
 
 COPY ../requirements.txt .
-RUN pip install --no-cache-dir -U pip setuptools wheel
-RUN pip install --no-cache-dir -r requirements.txt
+RUN set -ex && \
+    pip3 install --upgrade pip && \
+    pip3 install -r ./requirements.txt && \
+    rm -rf /root/.cache/
 
 CMD ["/bin/bash"]
-

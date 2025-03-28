@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import osmnx as ox
 import contextily as cx
+from sklearn.preprocessing import StandardScaler
 
 # Set page configuration
 st.set_page_config(
@@ -19,18 +20,31 @@ st.set_page_config(
     }
 )
 # Load data
-stations = pd.read_csv('data/srp_tools/stations_with_stats.csv')
-stations_std = pd.read_csv('data/srp_tools/stations_with_std_stats.csv')
+tokyo_stations = pd.read_csv('data/srp_tools/tokyo_stations_with_stats.csv')
 similarities_path = "data/srp_tools/cosine_similarity_tokyo.csv"
 similarities = pd.read_csv(similarities_path)
 similarities.columns = ['org-dest', 'Similarity']
 similarities[['org', 'dest']] = similarities['org-dest'].str.split('-', expand=True)
 similarities.drop(columns=['org-dest'], inplace=True)
 similarities = similarities[['org', 'dest', 'Similarity']]
-#similarities.to_csv(similarities_path, index=False)
 
 # variables
-tokyo_stations = stations_std[stations_std['pref_cd'] == 13].sort_values(by='station_cd')
+columns = ['circuity_avg', 'edge_density_km', 'edge_length_avg',
+    'edge_length_total', 'intersection_count', 'intersection_density_km',
+    'k_avg', 'm', 'n', 'node_density_km', 'self_loop_proportion',
+    'street_density_km', 'street_length_avg', 'street_length_total',
+    'street_segment_count', 'streets_per_node_avg', 'Circuit Index (μ)',
+    'Alpha Index', 'Beta Index', 'Gamma Index', 'Road Density (km/km²)',
+    'Intersection Density (nodes/km²)', "Average Circuitousness (A')",
+    'Degree Centrality (Mean)', 'Degree Centrality (Std Dev)',
+    'Closeness Centrality (Mean)', 'Closeness Centrality (Std Dev)',
+    'Betweenness Centrality (Mean)', 'Betweenness Centrality (Std Dev)',
+    'Global Integration (Mean)', 'Global Integration (Std Dev)',
+    'Local Integration (Radius=3, Mean)',
+    'Local Integration (Radius=3, Std Dev)']
+tokyo_stations_std = tokyo_stations.copy()
+scaler = StandardScaler()
+tokyo_stations_std[columns] = scaler.fit_transform(tokyo_stations_std[columns]) # 標準化
 
 # functions
 
@@ -39,7 +53,7 @@ def graph_from_df(data):
     one_mile = 800 #meters
 
     try:
-        G = ox.graph_from_point(wurster_hall, dist=one_mile, network_type='drive')
+        G = ox.graph_from_point(wurster_hall, dist=one_mile, network_type='all')
         if G is None:
             return None
         G = ox.project_graph(G, to_crs='EPSG:3857')
@@ -69,16 +83,9 @@ def plot_graph(G, title=''):
 # ------------------------------------------------------------------
 # 特徴量の寄与度を計算して可視化
 def show_feature_contributions(org, dest):
-    columns = ['circuity_avg', 'edge_density_km', 'edge_length_avg',
-       'edge_length_total', 'intersection_count', 'intersection_density_km',
-       'k_avg', 'm', 'n', 'node_density_km', 'self_loop_proportion',
-       'street_density_km', 'street_length_avg', 'street_length_total',
-       'street_segment_count', 'streets_per_node_avg', 'average_clustering',
-       'mean_integration', 'num_communities', 'modularity', 'var_integration',]
-
     # 類似度の高いペアのベクトルを取得
-    vec1 = stations_std[stations_std['station_name'] == org].iloc[0][columns].values
-    vec2 = stations_std[stations_std['station_name'] == dest].iloc[0][columns].values
+    vec1 = tokyo_stations_std[tokyo_stations_std['station_name'] == org].iloc[0][columns].values
+    vec2 = tokyo_stations_std[tokyo_stations_std['station_name'] == dest].iloc[0][columns].values
     # 寄与度の計算
     contributions = (vec1 * vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
     # 寄与率の可視化
@@ -133,38 +140,41 @@ def main():
         if dest:
             show_feature_contributions(target, dest)
             st.markdown("""
-| 指標 | 説明 |
-|------|------|
-| n | グラフのノード（交差点）の数 |
-| m | グラフのエッジ（道路区間）の数 |
-| k_avg | 平均次数。ノードあたりの平均エッジ数（2m / n） |
-| edge_length_total | 全エッジの長さの合計 |
-| edge_length_avg | エッジの平均長さ（edge_length_total / m） |
-| street_length_total | 全道路の長さの合計（双方向道路は1回だけカウント） |
-| street_length_avg | 道路の平均長さ |
-| streets_per_node_avg | ノードあたりの平均道路数 |
-| streets_per_node_counts | 各ノードの道路数の分布 |
-| streets_per_node_proportions | 各ノードの道路数の割合 |
-| intersection_count | 交差点の数 |
-| circuity_avg | 平均迂回率。エッジの実際の長さと直線距離の比率 |
-| street_segment_count | 道路区間の数 |
-| self_loop_proportion | 自己ループの割合 |
-| node_density_km | 1平方キロメートルあたりのノード密度 |
-| intersection_density_km | 1平方キロメートルあたりの交差点密度 |
-| edge_density_km | 1平方キロメートルあたりのエッジ密度 |
-| street_density_km | 1平方キロメートルあたりの道路密度 |
-| street_segment_count | 道路セグメントの総数 |
-| clean_intersection_count | クリーンな交差点（自己ループや並行エッジを除く）の数 |
-| clean_intersection_density_km | 1平方キロメートルあたりのクリーンな交差点密度 |
-| average_cruster_coefficient | グラフのクラスター係数 |
-| num_communities | グラフをコミュニティに分割した際の総数 |
-| modularity | コミュニティ分割の当てはまり度 |
-| mean_integration | インテグレーション値の平均 |
-| var_integration | インテグレーション値の分散 |
+| 指標 | 説明 | 値が大きいほど... |
+|------|------|------|
+| n | グラフのノード（交差点）の数 |  |
+| m | グラフのエッジ（道路区間）の数 |  |
+| k_avg | 平均次数。ノードあたりの平均エッジ数（2m / n） |  |
+| edge_length_total | 全エッジの長さの合計 |  |
+| edge_length_avg | エッジの平均長さ（edge_length_total / m） |  |
+| street_length_total | 全道路の長さの合計（双方向道路は1回だけカウント） |  |
+| street_length_avg | 道路の平均長さ |  |
+| streets_per_node_avg | ノードあたりの平均道路数 |  |
+| streets_per_node_counts | 各ノードの道路数の分布 |  |
+| streets_per_node_proportions | 各ノードの道路数の割合 |  |
+| intersection_count | 交差点の数 |  |
+| circuity_avg | 平均迂回率。エッジの実際の長さと直線距離の比率 |  |
+| street_segment_count | 道路区間の数 |  |
+| self_loop_proportion | 自己ループの割合 |  |
+| node_density_km | 1平方キロメートルあたりのノード密度 |  |
+| intersection_density_km | 1平方キロメートルあたりの交差点密度 |  |
+| edge_density_km | 1平方キロメートルあたりのエッジ密度 |  |
+| street_density_km | 1平方キロメートルあたりの道路密度 |  |
+| street_segment_count | 道路セグメントの総数 |  |
+| clean_intersection_count | クリーンな交差点（自己ループや並行エッジを除く）の数 |  |
+| clean_intersection_density_km | 1平方キロメートルあたりのクリーンな交差点密度 |  |
+| **回路指数 (μ)** | 道路網の循環路の数 | 回遊性が高い |
+| **α指数** | 実際の循環路数 ÷ 完全連結時の循環路数 | 完全連結型に近い |
+| **β指数** | 交差点あたりの平均道路数 | 道路密度が高い |
+| **γ指数** | 実際の道路数 ÷ 完全連結時の道路数 | 回遊性が高い |
+| **平均最短距離 (Ai)** | ノード間の平均最短距離 | アクセス性が低い |
+| **ネットワーク全体の平均最短距離 (Di)** | 全体のアクセス性 | アクセス性が低い |
+| **ノードの迂回率 (A')** | 実際の最短距離 ÷ 直線距離 | 迂回が多い |
+| **ネットワーク全体の平均迂回率 (A)** | 迂回のしやすさ | 迂回が多い |
 ----
 """)
-    target_station = stations[stations['station_name'] == target].iloc[0]
-    dest_station = stations[stations['station_name'] == dest].iloc[0]
+    target_station = tokyo_stations[tokyo_stations['station_name'] == target].iloc[0]
+    dest_station = tokyo_stations[tokyo_stations['station_name'] == dest].iloc[0]
     target_station['駅種別'] = '対象駅'
     dest_station['駅種別'] = '選択した駅'
     df = pd.concat([target_station, dest_station], axis=1).T

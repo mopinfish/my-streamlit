@@ -10,8 +10,9 @@
     },
     "vscode": {
       "settings": {
-          "python.pythonPath": "/workspace/venv/bin/python",
-          "python.venvPath": "/workspace/venv"
+          "python.pythonPath": "/opt/conda/bin/python",
+          "python.defaultInterpreterPath": "/opt/conda/bin/python", // または適切なパス
+          "python.terminal.activateEnvironment": true
       },
       "extensions": [
         "ms-python.python",
@@ -19,7 +20,6 @@
       ]
     }
   },
-  "postCreateCommand": "source /workspace/venv/bin/activate && pip install -r requirements.txt",
   "postAttachCommand": {
     "server": "streamlit run app.py --server.enableCORS false --server.enableXsrfProtection false"
   },
