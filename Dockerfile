@@ -9,7 +9,7 @@ RUN echo "Acquire::http::Pipeline-Depth 0;" > /etc/apt/apt.conf.d/99custom && \
 # 必要なパッケージをインストール
 RUN apt-get update && apt-get install -y \
     python3-pip \
-    python3.12-venv \
+    python3-venv \
     fonts-noto-cjk \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -19,7 +19,7 @@ WORKDIR /workspace
 RUN python3 -m venv /workspace/venv
 ENV PATH="/workspace/venv/bin:$PATH"
 
-COPY ../requirements.txt .
+COPY ./requirements.txt .
 RUN set -ex && \
     pip3 install --upgrade pip && \
     pip3 install -r ./requirements.txt && \
