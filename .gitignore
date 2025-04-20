@@ -1,6 +1,12 @@
 .DS_Store
 cache
 __pycache__
+.venv/
+.env
+*.pyc
+*.pyo
+*.pyd
+.mypy_cache/
 
 # from levenshtein_distance.py
 lib/bindings/

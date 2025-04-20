@@ -20,9 +20,10 @@ RUN python3 -m venv /workspace/venv
 ENV PATH="/workspace/venv/bin:$PATH"
 
 COPY ./requirements.txt .
+COPY ./requirements-dev.txt .
 RUN set -ex && \
     pip3 install --upgrade pip && \
-    pip3 install -r ./requirements.txt && \
+    pip3 install -r ./requirements.txt -r ./requirements-dev.txt && \
     rm -rf /root/.cache/
 
 CMD ["/bin/bash"]

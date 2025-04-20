@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/workkspace
+    environment:
+      - APP_NAME=My Streamlit App
+    command: >
+      sh -c "
+        streamlit run main.py
+      "

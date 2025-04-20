@@ -1,5 +1,6 @@
 import streamlit as st
 import osmnx as ox
+
 ox.config(use_cache=True, log_console=True)
 from geopy.geocoders import Nominatim
 import folium
@@ -13,12 +14,14 @@ import matplotlib.pyplot
 
 geolocator = Nominatim(user_agent="geocoding-example")
 
-st.title('Routing by OSMnx')
+st.title("Routing by OSMnx")
 
 address = st.text_input("表示したい場所を入力してください")
 origin_address = st.text_input("出発地を入力してください")
 destination_address = st.text_input("目的地を入力してください")
-network_type = st.selectbox("network_type", ("all_private", "all", "bike", "drive", "drive_service", "walk")) #第一引数：リスト名、第二引数：選択肢、複数選択可
+network_type = st.selectbox(
+    "network_type", ("all_private", "all", "bike", "drive", "drive_service", "walk")
+)  # 第一引数：リスト名、第二引数：選択肢、複数選択可
 
 if st.button("最短ルートを表示", key=2):
     # Get the area of interest polygon
@@ -34,13 +37,10 @@ if st.button("最短ルートを表示", key=2):
     place_polygon = place_polygon.to_crs("EPSG:4326")
 
     # Retrieve the network graph
-    graph = ox.graph_from_polygon(
-        place_polygon.at[0, "geometry"],
-        network_type="bike"
-    )
+    graph = ox.graph_from_polygon(place_polygon.at[0, "geometry"], network_type="bike")
 
     # Transform the graph to UTM
-    graph = ox.project_graph(graph) 
+    graph = ox.project_graph(graph)
 
     # Extract reprojected nodes and edges
     nodes, edges = ox.graph_to_gdfs(graph)
@@ -66,44 +66,38 @@ if st.button("最短ルートを表示", key=2):
     fig, ax = ox.plot_graph_route(graph, route)
     # Get the nodes along the shortest path
     route_nodes = nodes.loc[route]
-    
+
     # Create a geometry for the shortest path
-    route_line = shapely.geometry.LineString(
-        list(route_nodes.geometry.values)
-    )
+    route_line = shapely.geometry.LineString(list(route_nodes.geometry.values))
     route_geom = geopandas.GeoDataFrame(
         {
             "geometry": [route_line],
             "osm_nodes": [route],
         },
-        crs=edges.crs
+        crs=edges.crs,
     )
 
-    buildings = ox.geometries_from_place(
-        address,
-        {
-            "building" : True
-        }
-    ).to_crs(edges.crs)
+    buildings = ox.geometries_from_place(address, {"building": True}).to_crs(edges.crs)
 
     # Calculate the route length
     route_geom["length_m"] = route_geom.length
 
-    
-    fig, ax = matplotlib.pyplot.subplots(figsize=(12,8))
+    fig, ax = matplotlib.pyplot.subplots(figsize=(12, 8))
 
     # Plot edges and nodes
-    edges.plot(ax=ax, linewidth=0.75, color='gray')
-    nodes.plot(ax=ax, markersize=2, color='gray')
+    edges.plot(ax=ax, linewidth=0.75, color="gray")
+    nodes.plot(ax=ax, markersize=2, color="gray")
 
     # Add buildings
-    ax = buildings.plot(ax=ax, facecolor='lightgray', alpha=0.7)
+    ax = buildings.plot(ax=ax, facecolor="lightgray", alpha=0.7)
 
     # Add the route
-    ax = route_geom.plot(ax=ax, linewidth=2, linestyle='--', color='red')
+    ax = route_geom.plot(ax=ax, linewidth=2, linestyle="--", color="red")
 
     # Add basemap
-    contextily.add_basemap(ax, crs=buildings.crs, source=contextily.providers.CartoDB.Positron)
+    contextily.add_basemap(
+        ax, crs=buildings.crs, source=contextily.providers.CartoDB.Positron
+    )
 
     _ = ax.axis("off")
     # Matplotlib の Figure を指定して可視化する
