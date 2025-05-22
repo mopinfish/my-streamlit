@@ -5,10 +5,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 def calculate_graph_metrics(place_name, radius=800):
     """
     Retrieve the road network around a given location and compute graph theory metrics.
-    
+
     Parameters:
         place_name (str): Name of the location (e.g., "Tokyo Station, Japan")
         radius (int): Radius of the area to retrieve the network (meters)
@@ -19,9 +20,9 @@ def calculate_graph_metrics(place_name, radius=800):
     """
     # Get the coordinates of the specified place
     point = ox.geocode(place_name)
-    
+
     # Retrieve the road network within the specified radius
-    G = ox.graph_from_point(point, dist=radius, network_type='drive')
+    G = ox.graph_from_point(point, dist=radius, network_type="drive")
 
     # Number of nodes and edges
     num_nodes = len(G.nodes)
@@ -47,14 +48,14 @@ def calculate_graph_metrics(place_name, radius=800):
     def calculate_circuitousness():
         circuitousness_values = []
         for u, v, data in G.edges(data=True):
-            if 'geometry' in data and data['geometry'] is not None:
-                straight_line_distance = data['geometry'].length
+            if "geometry" in data and data["geometry"] is not None:
+                straight_line_distance = data["geometry"].length
             else:
                 straight_line_distance = ox.distance.euclidean(
-                    G.nodes[u]['y'], G.nodes[u]['x'], G.nodes[v]['y'], G.nodes[v]['x']
+                    G.nodes[u]["y"], G.nodes[u]["x"], G.nodes[v]["y"], G.nodes[v]["x"]
                 )
             if straight_line_distance > 0:
-                circuitousness = data['length'] / straight_line_distance
+                circuitousness = data["length"] / straight_line_distance
                 circuitousness_values.append(circuitousness)
         return np.mean(circuitousness_values) if circuitousness_values else 0
 
@@ -62,26 +63,38 @@ def calculate_graph_metrics(place_name, radius=800):
 
     # **2. Centrality Metrics**
     degree_centrality = nx.degree_centrality(G)
-    closeness_centrality = nx.closeness_centrality(G, distance='length')
-    betweenness_centrality = nx.betweenness_centrality(G, weight='length', normalized=True)
+    closeness_centrality = nx.closeness_centrality(G, distance="length")
+    betweenness_centrality = nx.betweenness_centrality(
+        G, weight="length", normalized=True
+    )
 
     # **3. Integration Value Calculation**
-    shortest_paths = dict(nx.shortest_path_length(G, weight='length'))
+    shortest_paths = dict(nx.shortest_path_length(G, weight="length"))
 
     # Global Integration
     global_integration_values = {
-        node: (num_nodes - 1) / sum(shortest_paths[node].values()) if sum(shortest_paths[node].values()) > 0 else 0
+        node: (
+            (num_nodes - 1) / sum(shortest_paths[node].values())
+            if sum(shortest_paths[node].values()) > 0
+            else 0
+        )
         for node in G.nodes
     }
 
     # Local Integration (Radius=3)
     local_integration_values = {}
     for node in G.nodes:
-        ego_graph = nx.ego_graph(G, node, radius=3, distance='length')
-        local_shortest_paths = dict(nx.shortest_path_length(ego_graph, source=node, weight='length'))
+        ego_graph = nx.ego_graph(G, node, radius=3, distance="length")
+        local_shortest_paths = dict(
+            nx.shortest_path_length(ego_graph, source=node, weight="length")
+        )
         total_distance = sum(local_shortest_paths.values())
         num_local_nodes = len(local_shortest_paths)
-        local_integration_values[node] = (num_local_nodes - 1) / total_distance if total_distance > 0 and num_local_nodes > 1 else 0
+        local_integration_values[node] = (
+            (num_local_nodes - 1) / total_distance
+            if total_distance > 0 and num_local_nodes > 1
+            else 0
+        )
 
     # **4. Compute Statistics**
     def compute_statistics(values):
@@ -94,34 +107,39 @@ def calculate_graph_metrics(place_name, radius=800):
     local_mean, local_std = compute_statistics(local_integration_values)
 
     # **Return results as Pandas Series**
-    metrics = pd.Series({
-        "Circuit Index (μ)": circuit_index,
-        "Alpha Index": alpha_index,
-        "Beta Index": beta_index,
-        "Gamma Index": gamma_index,
-        "Road Density (km/km²)": road_density,
-        "Intersection Density (nodes/km²)": intersection_density,
-        "Average Circuitousness (A')": circuitousness,
-        "Degree Centrality (Mean)": degree_mean,
-        "Degree Centrality (Std Dev)": degree_std,
-        "Closeness Centrality (Mean)": closeness_mean,
-        "Closeness Centrality (Std Dev)": closeness_std,
-        "Betweenness Centrality (Mean)": betweenness_mean,
-        "Betweenness Centrality (Std Dev)": betweenness_std,
-        "Global Integration (Mean)": global_mean,
-        "Global Integration (Std Dev)": global_std,
-        "Local Integration (Radius=3, Mean)": local_mean,
-        "Local Integration (Radius=3, Std Dev)": local_std
-    })
-    
+    metrics = pd.Series(
+        {
+            "Circuit Index (μ)": circuit_index,
+            "Alpha Index": alpha_index,
+            "Beta Index": beta_index,
+            "Gamma Index": gamma_index,
+            "Road Density (km/km²)": road_density,
+            "Intersection Density (nodes/km²)": intersection_density,
+            "Average Circuitousness (A')": circuitousness,
+            "Degree Centrality (Mean)": degree_mean,
+            "Degree Centrality (Std Dev)": degree_std,
+            "Closeness Centrality (Mean)": closeness_mean,
+            "Closeness Centrality (Std Dev)": closeness_std,
+            "Betweenness Centrality (Mean)": betweenness_mean,
+            "Betweenness Centrality (Std Dev)": betweenness_std,
+            "Global Integration (Mean)": global_mean,
+            "Global Integration (Std Dev)": global_std,
+            "Local Integration (Radius=3, Mean)": local_mean,
+            "Local Integration (Radius=3, Std Dev)": local_std,
+        }
+    )
+
     return metrics, G
+
 
 # **Streamlit UI**
 st.title("Urban Road Network Analysis Tool")
 
 # User input form
 with st.form("location_form"):
-    place_name = st.text_input("Enter a location (e.g., 'Tokyo Station, Japan'):", "Tokyo Station, Japan")
+    place_name = st.text_input(
+        "Enter a location (e.g., 'Tokyo Station, Japan'):", "Tokyo Station, Japan"
+    )
     submitted = st.form_submit_button("Analyze")
 
 if submitted:
@@ -140,9 +158,5 @@ if submitted:
     # Download CSV
     csv = metrics.to_csv().encode("utf-8")
     st.download_button(
-        "Download CSV",
-        csv,
-        "graph_metrics.csv",
-        "text/csv",
-        key="download-csv"
+        "Download CSV", csv, "graph_metrics.csv", "text/csv", key="download-csv"
     )

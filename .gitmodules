@@ -1,0 +1,3 @@
+[submodule "srp-data"]
+	path = srp-data
+	url = git@github.com:mopinfish/srp-data.git
