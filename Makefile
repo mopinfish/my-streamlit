@@ -1,13 +1,15 @@
+shell:
+	pipenv shell
 run:
 	streamlit main app.py
 install:
 	pip3 install -r requirements.txt -r requirements-dev.txt
-#freeze:
-#	pip3 freeze > requirements.txt
-#lock:
-#	pipenv lock
-#resolve_dependencies:
-#	make install & make freeze & make lock
+freeze:
+	pip3 freeze > requirements.txt
+lock:
+	pipenv lock
+resolve_dependencies:
+	make install & make freeze & make lock
 
 # コードフォーマット
 fmt:

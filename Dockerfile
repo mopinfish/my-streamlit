@@ -23,6 +23,8 @@ COPY ./requirements.txt .
 COPY ./requirements-dev.txt .
 RUN set -ex && \
     pip3 install --upgrade pip && \
+    pip3 install pipenv && \
+    pipenv --python 3.12 && \
     pip3 install -r ./requirements.txt -r ./requirements-dev.txt && \
     rm -rf /root/.cache/
 
