@@ -1,7 +1,7 @@
 shell:
 	pipenv shell
 run:
-	streamlit run app.py
+	streamlit main app.py
 install:
 #	pipenv install
 #	pip install --no-cache-dir -r requirements.txt
