@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 import seaborn as sns
 from math import pi
 from sklearn.preprocessing import StandardScaler
@@ -16,14 +15,43 @@ INFO_PATH = "srp-data/01_stations_with_metrics.csv"
 
 # 指標カテゴリ定義
 metric_categories = {
-    "回遊性": ["circuit_index_mu", "mean_circuit_index_mu_a", "alpha_index", "beta_index", "gamma_index"],
-    "アクセス性": ["avg_shortest_path_Di", "closeness_centrality_mean", "integration_global_mean", "integration_local_r3_mean", "basic_node_density_km"],
+    "回遊性": [
+        "circuit_index_mu",
+        "mean_circuit_index_mu_a",
+        "alpha_index",
+        "beta_index",
+        "gamma_index",
+    ],
+    "アクセス性": [
+        "avg_shortest_path_Di",
+        "closeness_centrality_mean",
+        "integration_global_mean",
+        "integration_local_r3_mean",
+        "basic_node_density_km",
+    ],
     "迂回性": ["avg_circuity_A", "basic_circuity_avg"],
-    "交差点密度": ["intersection_density_Dc_per_ha", "basic_intersection_density_km", "basic_clean_intersection_density_km"],
-    "中心性": ["degree_centrality_mean", "betweenness_centrality_mean", "closeness_centrality_mean", "integration_global_mean", "integration_local_r3_mean"],
-    "街路スケール": ["basic_street_length_avg", "basic_edge_density_km", "total_edge_length_L", "road_density_Dl_m_per_ha", "basic_street_density_km"]
+    "交差点密度": [
+        "intersection_density_Dc_per_ha",
+        "basic_intersection_density_km",
+        "basic_clean_intersection_density_km",
+    ],
+    "中心性": [
+        "degree_centrality_mean",
+        "betweenness_centrality_mean",
+        "closeness_centrality_mean",
+        "integration_global_mean",
+        "integration_local_r3_mean",
+    ],
+    "街路スケール": [
+        "basic_street_length_avg",
+        "basic_edge_density_km",
+        "total_edge_length_L",
+        "road_density_Dl_m_per_ha",
+        "basic_street_density_km",
+    ],
 }
 selected_metrics = list(set(sum(metric_categories.values(), [])))
+
 
 # --- データ読み込みとZスコア化（キャッシュ付き） ---
 @st.cache_data
@@ -39,7 +67,11 @@ def load_and_standardize_info(path, selected_metrics):
         except:
             return False
 
-    valid_metrics = [col for col in selected_metrics if col in df_unique.columns and is_convertible(df_unique[col])]
+    valid_metrics = [
+        col
+        for col in selected_metrics
+        if col in df_unique.columns and is_convertible(df_unique[col])
+    ]
     df_metrics = df_unique[valid_metrics].copy()
     scaler = StandardScaler()
     df_scaled = pd.DataFrame(scaler.fit_transform(df_metrics), columns=valid_metrics)
@@ -49,30 +81,40 @@ def load_and_standardize_info(path, selected_metrics):
 
     return df_unique, df_scaled, valid_metrics
 
+
 # 類似度データ読み込み
-df_sim_raw = pd.read_csv(SIM_PATH, dtype={"station_cd_source": str, "station_cd_target": str})
-df_info_raw, df_info_zscore, valid_metrics = load_and_standardize_info(INFO_PATH, selected_metrics)
+df_sim_raw = pd.read_csv(
+    SIM_PATH, dtype={"station_cd_source": str, "station_cd_target": str}
+)
+df_info_raw, df_info_zscore, valid_metrics = load_and_standardize_info(
+    INFO_PATH, selected_metrics
+)
 
 # 駅ラベルマップ
 station_label_map = df_info_raw.set_index("station_cd")["station_label"].to_dict()
 df_sim_raw["source_label"] = df_sim_raw["station_cd_source"].map(station_label_map)
 df_sim_raw["target_label"] = df_sim_raw["station_cd_target"].map(station_label_map)
-df_sim = df_sim_raw.dropna(subset=["source_label", "target_label"]).drop_duplicates(subset=["source_label", "target_label"])
+df_sim = df_sim_raw.dropna(subset=["source_label", "target_label"]).drop_duplicates(
+    subset=["source_label", "target_label"]
+)
 
 # 駅選択（複数可）
 available_labels = sorted(df_sim["source_label"].unique())
-selected_station_labels = st.multiselect("基準駅を選択してください（複数選択可）", available_labels)
+selected_station_labels = st.multiselect(
+    "基準駅を選択してください（複数選択可）", available_labels
+)
 
 if not selected_station_labels:
     st.stop()
 
-selected_station_cds = df_info_raw[df_info_raw["station_label"].isin(selected_station_labels)]["station_cd"].tolist()
+selected_station_cds = df_info_raw[
+    df_info_raw["station_label"].isin(selected_station_labels)
+]["station_cd"].tolist()
 
 # 類似駅抽出（全選択駅に対して）
-similar_stations_all = (
-    df_sim[df_sim["station_cd_source"].isin(selected_station_cds)]
-    .sort_values(by="cosine_similarity", ascending=False)
-)
+similar_stations_all = df_sim[
+    df_sim["station_cd_source"].isin(selected_station_cds)
+].sort_values(by="cosine_similarity", ascending=False)
 
 # 類似駅から基準駅以外を抽出し、top_n件ずつ取得（重複除去）
 top_n = st.slider("基準駅ごとの類似駅数", min_value=3, max_value=20, value=10)
@@ -86,10 +128,20 @@ df_compare_scaled = df_info_zscore.loc[df_info_zscore.index.isin(target_labels)]
 
 # 類似駅リスト表示
 st.subheader("🔍 類似駅リスト")
-df_display = similar_stations_all[similar_stations_all["station_cd_source"].isin(selected_station_cds)].copy()
+df_display = similar_stations_all[
+    similar_stations_all["station_cd_source"].isin(selected_station_cds)
+].copy()
 df_display = df_display[df_display["target_label"].isin(similar_targets)]
-df_display["cosine_similarity"] = df_display["cosine_similarity"].map(lambda x: f"{x:.4f}")
-df_display = df_display.rename(columns={"source_label": "基準駅", "target_label": "類似駅", "cosine_similarity": "コサイン類似度"})
+df_display["cosine_similarity"] = df_display["cosine_similarity"].map(
+    lambda x: f"{x:.4f}"
+)
+df_display = df_display.rename(
+    columns={
+        "source_label": "基準駅",
+        "target_label": "類似駅",
+        "cosine_similarity": "コサイン類似度",
+    }
+)
 st.dataframe(df_display[["基準駅", "類似駅", "コサイン類似度"]])
 
 # 全体レーダーチャート
@@ -117,7 +169,9 @@ tabs = st.tabs(metric_categories.keys())
 for category, tab in zip(metric_categories.keys(), tabs):
     with tab:
         st.markdown(f"### 📌 カテゴリ：{category}")
-        metrics = [m for m in metric_categories[category] if m in df_compare_scaled.columns]
+        metrics = [
+            m for m in metric_categories[category] if m in df_compare_scaled.columns
+        ]
 
         if not metrics:
             st.warning("このカテゴリに有効な指標が見つかりません。")
@@ -146,3 +200,34 @@ for category, tab in zip(metric_categories.keys(), tabs):
         ax.set_title(f"{category}カテゴリ レーダーチャート", y=1.1)
         ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.1))
         st.pyplot(fig_r)
+
+# lat/lon を folium 用に変換
+df_info_raw = df_info_raw.rename(columns={"lat": "latitude", "lon": "longitude"})
+
+# 地図表示
+st.subheader("🗺️ 駅の位置マップ（基準駅＋類似駅）")
+
+df_map_data = df_info_raw[df_info_raw["station_label"].isin(target_labels)].copy()
+df_map_data = df_map_data.dropna(subset=["latitude", "longitude"])
+
+import folium
+from streamlit_folium import st_folium
+
+# 初期地図中心を駅群の平均位置に設定
+start_coords = [df_map_data["latitude"].mean(), df_map_data["longitude"].mean()]
+m = folium.Map(location=start_coords, zoom_start=11)
+
+# 駅をマッピング
+for _, row in df_map_data.iterrows():
+    color = "red" if row["station_label"] in selected_station_labels else "blue"
+    folium.CircleMarker(
+        location=[row["latitude"], row["longitude"]],
+        radius=6,
+        color=color,
+        fill=True,
+        fill_color=color,
+        fill_opacity=0.8,
+        tooltip=row["station_label"],
+    ).add_to(m)
+
+st_folium(m, width=800, height=500)

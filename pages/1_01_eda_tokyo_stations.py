@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 from mylib import osmnx_utils as oxu
+
 # フォントファイルのパスを取得（Noto Sans CJK の例）
 font_path = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 font_prop = fm.FontProperties(fname=font_path)
@@ -19,6 +20,7 @@ st.set_page_config(
 )
 
 # 2 1 3 4 7 11 18 29 47
+
 
 # CSVファイルの読み込み（ローカル or URLに応じて変更）
 @st.cache_data
