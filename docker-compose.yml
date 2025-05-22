@@ -13,5 +13,5 @@ services:
       - APP_NAME=My Streamlit App
     command: >
       sh -c "
-        streamlit run main.py
+        streamlit run app.py
       "
