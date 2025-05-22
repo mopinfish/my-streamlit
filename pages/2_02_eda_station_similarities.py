@@ -1,61 +1,148 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from math import pi
+from sklearn.preprocessing import StandardScaler
 
-st.set_page_config(page_title="駅類似度分析（駅コードベース）", layout="wide")
-st.title("🚉 駅コードに基づく類似度インタラクティブ分析")
+# ページ設定
+st.set_page_config(page_title="複数駅類似度 + 指標分析", layout="wide")
+st.title("🚉 複数駅の類似度 & 指標分析ツール（Zスコア標準化＋カテゴリ別比較）")
 
+# データパス
+SIM_PATH = "srp-data/02_tokyo_stations_with_similarities_by_all_metrics.csv"
+INFO_PATH = "srp-data/01_stations_with_metrics.csv"
+
+# 指標カテゴリ定義
+metric_categories = {
+    "回遊性": ["circuit_index_mu", "mean_circuit_index_mu_a", "alpha_index", "beta_index", "gamma_index"],
+    "アクセス性": ["avg_shortest_path_Di", "closeness_centrality_mean", "integration_global_mean", "integration_local_r3_mean", "basic_node_density_km"],
+    "迂回性": ["avg_circuity_A", "basic_circuity_avg"],
+    "交差点密度": ["intersection_density_Dc_per_ha", "basic_intersection_density_km", "basic_clean_intersection_density_km"],
+    "中心性": ["degree_centrality_mean", "betweenness_centrality_mean", "closeness_centrality_mean", "integration_global_mean", "integration_local_r3_mean"],
+    "街路スケール": ["basic_street_length_avg", "basic_edge_density_km", "total_edge_length_L", "road_density_Dl_m_per_ha", "basic_street_density_km"]
+}
+selected_metrics = list(set(sum(metric_categories.values(), [])))
+
+# --- データ読み込みとZスコア化（キャッシュ付き） ---
 @st.cache_data
-def load_data():
-    return pd.read_csv("02_tokyo_stations_with_similarities_by_all_metrics.csv", dtype=str)
+def load_and_standardize_info(path, selected_metrics):
+    df = pd.read_csv(path, dtype={"station_cd": str})
+    df["station_label"] = df["station_name"] + "（" + df["address"] + "）"
+    df_unique = df.drop_duplicates(subset=["station_label"])
 
-df = load_data()
-df["cosine_similarity"] = df["cosine_similarity"].astype(float)
+    def is_convertible(series):
+        try:
+            pd.to_numeric(series.dropna().iloc[0])
+            return True
+        except:
+            return False
 
-# 駅コード一覧（比較元）
-station_codes = sorted(df["station_cd_source"].unique())
+    valid_metrics = [col for col in selected_metrics if col in df_unique.columns and is_convertible(df_unique[col])]
+    df_metrics = df_unique[valid_metrics].copy()
+    scaler = StandardScaler()
+    df_scaled = pd.DataFrame(scaler.fit_transform(df_metrics), columns=valid_metrics)
+    df_scaled["station_cd"] = df_unique["station_cd"].values
+    df_scaled["station_label"] = df_unique["station_label"].values
+    df_scaled.set_index("station_label", inplace=True)
 
-# UI
-st.sidebar.header("⚙️ オプション")
-selected_code = st.sidebar.selectbox("比較元の駅コードを選択", station_codes)
-top_n = st.sidebar.slider("表示数（上位類似駅）", min_value=5, max_value=50, value=10)
-show_heatmap = st.sidebar.checkbox("駅コード間の類似度ヒートマップを表示", value=False)
+    return df_unique, df_scaled, valid_metrics
 
-# フィルターと表示
-similar_df = (
-    df[df["station_cd_source"] == selected_code]
+# 類似度データ読み込み
+df_sim_raw = pd.read_csv(SIM_PATH, dtype={"station_cd_source": str, "station_cd_target": str})
+df_info_raw, df_info_zscore, valid_metrics = load_and_standardize_info(INFO_PATH, selected_metrics)
+
+# 駅ラベルマップ
+station_label_map = df_info_raw.set_index("station_cd")["station_label"].to_dict()
+df_sim_raw["source_label"] = df_sim_raw["station_cd_source"].map(station_label_map)
+df_sim_raw["target_label"] = df_sim_raw["station_cd_target"].map(station_label_map)
+df_sim = df_sim_raw.dropna(subset=["source_label", "target_label"]).drop_duplicates(subset=["source_label", "target_label"])
+
+# 駅選択（複数可）
+available_labels = sorted(df_sim["source_label"].unique())
+selected_station_labels = st.multiselect("基準駅を選択してください（複数選択可）", available_labels)
+
+if not selected_station_labels:
+    st.stop()
+
+selected_station_cds = df_info_raw[df_info_raw["station_label"].isin(selected_station_labels)]["station_cd"].tolist()
+
+# 類似駅抽出（全選択駅に対して）
+similar_stations_all = (
+    df_sim[df_sim["station_cd_source"].isin(selected_station_cds)]
     .sort_values(by="cosine_similarity", ascending=False)
-    .head(top_n)
 )
 
-st.subheader(f"🔍 駅コード「{selected_code}」に類似する駅トップ {top_n}")
-st.dataframe(similar_df.reset_index(drop=True), use_container_width=True)
-
-fig = px.bar(
-    similar_df,
-    x="station_cd_target",
-    y="cosine_similarity",
-    labels={"station_cd_target": "類似駅コード", "cosine_similarity": "コサイン類似度"},
-    title=f"「{selected_code}」に似ている駅（上位{top_n}件）"
+# 類似駅から基準駅以外を抽出し、top_n件ずつ取得（重複除去）
+top_n = st.slider("基準駅ごとの類似駅数", min_value=3, max_value=20, value=10)
+similar_targets = (
+    similar_stations_all.groupby("station_cd_source")
+    .head(top_n)["target_label"]
+    .tolist()
 )
-st.plotly_chart(fig, use_container_width=True)
+target_labels = list(set(selected_station_labels + similar_targets))
+df_compare_scaled = df_info_zscore.loc[df_info_zscore.index.isin(target_labels)]
 
-# ヒートマップ
-if show_heatmap:
-    st.subheader("🗺️ 駅コード間の類似度ヒートマップ")
-    pivot_df = df.pivot(index="station_cd_source", columns="station_cd_target", values="cosine_similarity")
-    fig_map = px.imshow(
-        pivot_df,
-        aspect="auto",
-        color_continuous_scale="Blues",
-        title="駅コード間のコサイン類似度マトリクス"
-    )
-    st.plotly_chart(fig_map, use_container_width=True)
+# 類似駅リスト表示
+st.subheader("🔍 類似駅リスト")
+df_display = similar_stations_all[similar_stations_all["station_cd_source"].isin(selected_station_cds)].copy()
+df_display = df_display[df_display["target_label"].isin(similar_targets)]
+df_display["cosine_similarity"] = df_display["cosine_similarity"].map(lambda x: f"{x:.4f}")
+df_display = df_display.rename(columns={"source_label": "基準駅", "target_label": "類似駅", "cosine_similarity": "コサイン類似度"})
+st.dataframe(df_display[["基準駅", "類似駅", "コサイン類似度"]])
 
-# CSV出力
-st.download_button(
-    label="📥 類似駅データをCSVでダウンロード",
-    data=similar_df.to_csv(index=False).encode("utf-8-sig"),
-    file_name=f"similar_stations_{selected_code}.csv",
-    mime="text/csv"
-)
+# 全体レーダーチャート
+st.subheader("📊 全指標のレーダーチャート（Zスコア）")
+if len(df_compare_scaled) > 1:
+    N = len(valid_metrics)
+    angles = [n / float(N) * 2 * pi for n in range(N)]
+    angles += angles[:1]
+
+    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
+    for name, row in df_compare_scaled[valid_metrics].iterrows():
+        values = row.tolist() + [row.tolist()[0]]
+        ax.plot(angles, values, label=name)
+        ax.fill(angles, values, alpha=0.1)
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(valid_metrics, fontsize=8)
+    ax.set_title("全指標を対象とした比較", y=1.1)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1))
+    st.pyplot(fig)
+
+# カテゴリ別比較
+st.subheader("📚 カテゴリ別プロファイル比較")
+tabs = st.tabs(metric_categories.keys())
+
+for category, tab in zip(metric_categories.keys(), tabs):
+    with tab:
+        st.markdown(f"### 📌 カテゴリ：{category}")
+        metrics = [m for m in metric_categories[category] if m in df_compare_scaled.columns]
+
+        if not metrics:
+            st.warning("このカテゴリに有効な指標が見つかりません。")
+            continue
+
+        df_subset = df_compare_scaled[metrics]
+
+        # ヒートマップ
+        st.markdown("#### 🔥 ヒートマップ")
+        fig_h, ax = plt.subplots(figsize=(10, 4))
+        sns.heatmap(df_subset, annot=True, cmap="YlGnBu", ax=ax)
+        st.pyplot(fig_h)
+
+        # レーダーチャート
+        st.markdown("#### 🧭 レーダーチャート")
+        angles = [n / float(len(metrics)) * 2 * pi for n in range(len(metrics))]
+        angles += angles[:1]
+
+        fig_r, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+        for name in df_subset.index:
+            values = df_subset.loc[name].tolist() + [df_subset.loc[name].tolist()[0]]
+            ax.plot(angles, values, label=name)
+            ax.fill(angles, values, alpha=0.1)
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(metrics, fontsize=9)
+        ax.set_title(f"{category}カテゴリ レーダーチャート", y=1.1)
+        ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.1))
+        st.pyplot(fig_r)
