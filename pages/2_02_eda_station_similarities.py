@@ -52,13 +52,14 @@ metric_categories = {
 }
 selected_metrics = list(set(sum(metric_categories.values(), [])))
 
-
-# --- データ読み込みとZスコア化（キャッシュ付き） ---
 @st.cache_data
 def load_and_standardize_info(path, selected_metrics):
     df = pd.read_csv(path, dtype={"station_cd": str})
     df["station_label"] = df["station_name"] + "（" + df["address"] + "）"
     df_unique = df.drop_duplicates(subset=["station_label"])
+
+    # 東京都のデータのみをZスコア化対象とする
+    df_tokyo = df_unique[df_unique["pref_cd"] == 13].copy()
 
     def is_convertible(series):
         try:
@@ -67,19 +68,18 @@ def load_and_standardize_info(path, selected_metrics):
         except:
             return False
 
-    valid_metrics = [
-        col
-        for col in selected_metrics
-        if col in df_unique.columns and is_convertible(df_unique[col])
-    ]
-    df_metrics = df_unique[valid_metrics].copy()
-    scaler = StandardScaler()
-    df_scaled = pd.DataFrame(scaler.fit_transform(df_metrics), columns=valid_metrics)
-    df_scaled["station_cd"] = df_unique["station_cd"].values
-    df_scaled["station_label"] = df_unique["station_label"].values
-    df_scaled.set_index("station_label", inplace=True)
+    valid_metrics = [col for col in selected_metrics if col in df_tokyo.columns and is_convertible(df_tokyo[col])]
+    df_metrics_tokyo = df_tokyo[valid_metrics].copy()
 
-    return df_unique, df_scaled, valid_metrics
+    # Zスコア標準化（東京都の駅に対してのみ）
+    scaler = StandardScaler()
+    df_scaled_tokyo = pd.DataFrame(scaler.fit_transform(df_metrics_tokyo), columns=valid_metrics)
+    df_scaled_tokyo["station_cd"] = df_tokyo["station_cd"].values
+    df_scaled_tokyo["station_label"] = df_tokyo["station_label"].values
+
+    # 出力用データ：Zスコア化データ（東京都のみ）をindex付きで返す
+    df_scaled_tokyo.set_index("station_label", inplace=True)
+    return df_unique, df_scaled_tokyo, valid_metrics
 
 
 # 類似度データ読み込み
