@@ -1,7 +1,7 @@
 shell:
 	pipenv shell
 run:
-	streamlit main app.py
+	streamlit run app.py
 install:
 	pip3 install -r requirements.txt -r requirements-dev.txt
 freeze:

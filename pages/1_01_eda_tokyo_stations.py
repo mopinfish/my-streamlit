@@ -25,7 +25,7 @@ st.set_page_config(
 # CSVファイルの読み込み（ローカル or URLに応じて変更）
 @st.cache_data
 def load_data():
-    return pd.read_csv("srp-data/01_tokyo_stations_metrics.csv")
+    return pd.read_csv("srp-data/01_stations_with_metrics.csv")
 
 
 df = load_data()
@@ -45,10 +45,25 @@ df = load_data()
 #'Local Integration (Radius=3, Mean)', 'Local Integration (Radius=3, Std Dev)'
 # ]
 street_structure_columns = [
-    "Circuit Index (μ)",
-    "Alpha Index",
-    "Beta Index",
-    "Gamma Index",
+'n_nodes', 'e_edges', 'p_components', 'circuit_index_mu',
+       'mean_circuit_index_mu_a', 'alpha_index', 'beta_index', 'gamma_index',
+       'avg_shortest_path_Di', 'total_edge_length_L',
+       'road_density_Dl_m_per_ha', 'intersection_count_deg≥3',
+       'intersection_density_Dc_per_ha', 'avg_circuity_A', 'area_m2',
+       'degree_centrality_mean', 'degree_centrality_std',
+       'closeness_centrality_mean', 'closeness_centrality_std',
+       'betweenness_centrality_mean', 'betweenness_centrality_std',
+       'integration_global_mean', 'integration_global_std',
+       'integration_local_r3_mean', 'integration_local_r3_std', 'basic_n',
+       'basic_m', 'basic_k_avg', 'basic_edge_length_total',
+       'basic_edge_length_avg', 'basic_streets_per_node_avg',
+       'basic_streets_per_node_counts', 'basic_streets_per_node_proportions',
+       'basic_intersection_count', 'basic_street_length_total',
+       'basic_street_segment_count', 'basic_street_length_avg',
+       'basic_circuity_avg', 'basic_self_loop_proportion',
+       'basic_clean_intersection_count', 'basic_node_density_km',
+       'basic_intersection_density_km', 'basic_edge_density_km',
+       'basic_street_density_km', 'basic_clean_intersection_density_km'
 ]
 
 # UI: 指標選択

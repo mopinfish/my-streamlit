@@ -1,16 +1,23 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 import seaborn as sns
 from math import pi
 from sklearn.preprocessing import StandardScaler
+# フォントファイルのパスを取得（Noto Sans CJK の例）
+font_path = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
+font_prop = fm.FontProperties(fname=font_path)
+
+# 以降のグラフでデフォルトに設定
+plt.rcParams["font.family"] = font_prop.get_name()
 
 # ページ設定
 st.set_page_config(page_title="複数駅類似度 + 指標分析", layout="wide")
 st.title("🚉 複数駅の類似度 & 指標分析ツール（Zスコア標準化＋カテゴリ別比較）")
 
 # データパス
-SIM_PATH = "srp-data/02_tokyo_stations_with_similarities_by_all_metrics.csv"
+SIM_PATH = "srp-data/02_tokyo_stations_with_similarities_by_selected_metrics.csv"
 INFO_PATH = "srp-data/01_stations_with_metrics.csv"
 
 # 指標カテゴリ定義
